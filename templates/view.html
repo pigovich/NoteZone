@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{.Title}} - Просмотр</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <style>
+        :root {
+            --tech-green: #3ADF68;
+            --ozon-blue: #005BFF;
+            --anti-flash-white: #F1F1F1;
+            --dark-cerulean: #134C6E;
+            --prussian-blue: #0A3956;
+            --oxford-blue: #032B44;
+            --btn-primary-bg: var(--ozon-blue);
+            --btn-primary-bg-hover: #0046CC;
+            --btn-danger-bg: #DC3545;
+            --btn-danger-bg-hover: #C82333;
+        }
+
+        body {
+            font-family: 'GT Eesti Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--anti-flash-white);
+            color: var(--oxford-blue);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid var(--dark-cerulean);
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid var(--prussian-blue);
+            background: var(--prussian-blue);
+            color: white;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--dark-cerulean);
+            border: 1px solid var(--prussian-blue);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            user-select: none;
+        }
+
+        .back-btn:hover {
+            background: var(--prussian-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            flex-grow: 1;
+            color: white; /* добавляем эту строку */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1); /* небольшая тень для читаемости */
+        }
+
+        .note-section-badge {
+            background: var(--tech-green);
+            color: var(--oxford-blue);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        main.note-view {
+            padding: 30px;
+        }
+
+        .note-content-full {
+            white-space: pre-wrap;
+            font-size: 1rem;
+            color: var(--dark-cerulean);
+            margin-bottom: 30px;
+            line-height: 1.5;
+            user-select: text;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button,
+        .action-buttons a.btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            text-decoration: none;
+            text-align: center;
+            user-select: none;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-buttons button {
+            border: none;
+        }
+
+        .action-buttons button:hover,
+        .action-buttons a.btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-buttons button {
+            background: var(--tech-green);
+            color: var(--oxford-blue);
+            border: 2px solid var(--tech-green);
+        }
+
+        .action-buttons button:hover {
+            background: #2BB854;
+            border-color: #2BB854;
+        }
+
+        .action-buttons a.btn {
+            background: var(--ozon-blue);
+            color: white;
+            border: 2px solid var(--ozon-blue);
+        }
+
+        .action-buttons a.btn:hover {
+            background: var(--btn-primary-bg-hover);
+            border-color: var(--btn-primary-bg-hover);
+        }
+
+        .action-buttons .delete-btn {
+            background: var(--btn-danger-bg);
+            border: 2px solid var(--btn-danger-bg);
+            color: white;
+        }
+
+        .action-buttons .delete-btn:hover {
+            background: var(--btn-danger-bg-hover);
+            border-color: var(--btn-danger-bg-hover);
+        }
+
+        /* Toast notifications styling */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--dark-cerulean);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(10, 57, 86, 0.3);
+            cursor: pointer;
+            border: 2px solid var(--prussian-blue);
+            user-select: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background: var(--tech-green);
+            border-color: #2BB854;
+            color: var(--oxford-blue);
+        }
+
+        .toast.error {
+            background: var(--btn-danger-bg);
+            border-color: var(--btn-danger-bg-hover);
+            color: white;
+        }
+
+        .toast.info {
+            background: var(--ozon-blue);
+            border-color: #0046CC;
+            color: white;
+        }
+    </style>
+</head>
+<body data-flash="{{.Flash}}">
+    <div class="container">
+        <header class="header">
+            <a href="/" class="back-btn">← Назад к списку</a>
+            <h1>{{.Title}}</h1>
+            <span class="note-section-badge">{{.Section}}</span>
+        </header>
+
+        <main class="note-view">
+            <div class="note-content-full" id="noteContent" data-content="{{.Content}}">
+                {{.Content}}
+            </div>
+
+            <div class="action-buttons">
+                <button onclick="copyToClipboard()">📋 Копировать</button>
+                <a href="/edit/{{.Path}}" class="btn">✏️ Редактировать</a>
+                <button class="delete-btn" onclick="deleteNote('{{.Path}}')">🗑️ Удалить</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toast.onclick = () => removeToast(toast);
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            setTimeout(() => removeToast(toast), 3000);
+            return toast;
+        }
+
+        function removeToast(toast) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+
+        function copyToClipboard() {
+            const noteContentEl = document.getElementById('noteContent');
+            const content = noteContentEl.dataset.content;
+
+            navigator.clipboard.writeText(content)
+                .then(() => showToast('Текст скопирован!', 'success'))
+                .catch(err => {
+                    console.error('Ошибка копирования:', err);
+                    showToast('Не удалось скопировать текст', 'error');
+                });
+        }
+
+        function deleteNote(path) {
+            if (confirm('Вы уверены, что хотите удалить эту заметку? Это действие нельзя отменить.')) {
+                fetch('/delete/' + encodeURIComponent(path), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showToast('Заметка успешно удалена', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    } else {
+                        showToast('Ошибка при удалении', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error('Ошибка:', err);
+                    showToast('Ошибка при удалении', 'error');
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessage = document.body.getAttribute('data-flash');
+            if (flashMessage) {
+                showToast(flashMessage, 'success');
+            }
+        });
+    </script>
+</body>
+</html>

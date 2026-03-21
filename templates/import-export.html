@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Импорт / Экспорт заметок</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+
+    <!-- Шрифты GT Eesti Pro Display (такие же как на главной) -->
+    <style>
+        @font-face {
+            font-family: 'GT Eesti Pro Display';
+            src: url('/fonts/gt-eesti-pro-display-regular.woff2') format('woff2'),
+                 url('/fonts/gt-eesti-pro-display-regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'GT Eesti Pro Display';
+            src: url('/fonts/gt-eesti-pro-display-medium.woff2') format('woff2'),
+                 url('/fonts/gt-eesti-pro-display-medium.woff') format('woff');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+    </style>
+
+    <style>
+        /* Корпоративные цвета — копия из index.html */
+        :root {
+            --tech-green: #3ADF68;
+            --ozon-blue: #005BFF;
+            --anti-flash-white: #F1F1F1;
+            --dark-cerulean: #134C6E;
+            --prussian-blue: #0A3956;
+            --oxford-blue: #032B44;
+            --note-count-bg: var(--prussian-blue);
+            --note-count-color: white;
+            --btn-edit-bg: var(--tech-green);
+            --btn-edit-bg-hover: #2BB854;
+            --btn-delete-bg: #DC3545;
+            --btn-delete-bg-hover: #C82333;
+            --btn-primary-bg: var(--ozon-blue);
+            --btn-primary-bg-hover: #0046CC;
+
+            --bg-primary: var(--anti-flash-white);
+            --bg-secondary: #ffffff;
+            --text-primary: var(--oxford-blue);
+            --text-secondary: var(--dark-cerulean);
+            --border-color: var(--dark-cerulean);
+            --card-bg: #ffffff;
+            --card-bg-hover: #F9F9F9;
+            --header-border: var(--dark-cerulean);
+            --shadow-color: rgba(10, 57, 86, 0.1);
+            --shadow-color-hover: rgba(10, 57, 86, 0.2);
+            --btn-default-bg: #fff;
+            --btn-default-text: var(--prussian-blue);
+            --btn-default-border: var(--dark-cerulean);
+            --toast-bg: var(--dark-cerulean);
+            --toast-border: var(--prussian-blue);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #404040;
+            --card-bg: #2d2d2d;
+            --card-bg-hover: #3d3d3d;
+            --header-border: #404040;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --shadow-color-hover: rgba(0, 0, 0, 0.4);
+            --btn-default-bg: #3d3d3d;
+            --btn-default-text: #e0e0e0;
+            --btn-default-border: #555;
+            --toast-bg: #404040;
+            --toast-border: #555;
+            --tech-green: #4ced7a;
+            --ozon-blue: #3d7eff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'GT Eesti Pro Display', Arial, sans-serif;
+            font-weight: 400;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Хедер */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--header-border);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Переключатель темы */
+        .theme-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 30px;
+            border: 2px solid var(--border-color);
+        }
+
+        .theme-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .theme-btn:hover {
+            background: var(--card-bg-hover);
+        }
+
+        .theme-btn.active {
+            background: var(--dark-cerulean);
+            color: white;
+        }
+
+        [data-theme="dark"] .theme-btn.active {
+            background: var(--prussian-blue);
+        }
+
+        /* Карточки-блоки */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            transition: all 0.2s ease;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Формы и элементы управления */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--prussian-blue);
+        }
+
+        /* Кастомная кнопка выбора файла*/
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--btn-default-bg);
+            border: 2px solid var(--border-color);
+            color: var(--btn-default-text);
+            font-weight: 500;
+            transition: background 0.2s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .file-label:hover {
+            background: var(--card-bg-hover);
+        }
+
+        /* Скрываем реальный инпут */
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: var(--btn-default-bg);
+            color: var(--btn-default-text);
+            border: 1px solid var(--btn-default-border);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-color-hover);
+            background: var(--card-bg-hover);
+        }
+
+        .btn-primary {
+            background: var(--dark-cerulean);
+            color: white;
+            border-color: var(--prussian-blue);
+        }
+
+        .btn-primary:hover {
+            background: var(--prussian-blue);
+        }
+
+        .btn-success {
+            background: var(--tech-green);
+            color: white;
+            border-color: #2ECC71;
+        }
+
+        .btn-success:hover {
+            background: #28A745;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Уведомления */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--toast-bg);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--shadow-color-hover);
+            cursor: pointer;
+            border: 2px solid var(--toast-border);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Кнопка назад */
+        .back-link {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📂 Импорт / Экспорт заметок</h1>
+            <div class="header-actions">
+                <div class="theme-switch">
+                    <button class="theme-btn active" data-theme="light" onclick="setTheme('light')">☀️ Светлая</button>
+                    <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Тёмная</button>
+                </div>
+                <a href="/" class="btn">← На главную</a>
+            </div>
+        </header>
+
+        <!-- Блок экспорта -->
+        <div class="card">
+            <h2>📤 Экспорт всех заметок</h2>
+            <div class="export-buttons">
+                <button id="exportTxtBtn" class="btn btn-primary">📄 Экспорт в TXT</button>
+                <button id="exportDocBtn" class="btn btn-primary">📝 Экспорт в DOC</button>
+            </div>
+            <p class="note" style="margin-top: 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                Будут выгружены все заметки из всех разделов в одном файле. TXT — простой текст, DOC — документ Microsoft Word.
+            </p>
+        </div>
+
+        <!-- Блок импорта (исправлен выбор файла) -->
+        <div class="card">
+            <h2>📥 Импорт заметки из файла</h2>
+            <form id="importForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="fileInput">Выберите файл (.txt или .doc)</label>
+                    <!-- Используем label как кликабельную область -->
+                    <label for="fileInput" class="file-label" id="fileLabel">📂 Выберите файл</label>
+                    <input type="file" id="fileInput" name="file" accept=".txt,.doc" required>
+                </div>
+                <div class="form-group">
+                    <label for="categorySelect">Категория (раздел)</label>
+                    <select id="categorySelect" name="category" required>
+                        <option value="">Загрузка категорий...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="noteTitle">Название заметки</label>
+                    <input type="text" id="noteTitle" name="title" placeholder="Введите название" required>
+                </div>
+                <button type="submit" class="btn btn-success">📥 Импортировать</button>
+            </form>
+        </div>
+
+        <div class="back-link">
+            <a href="/" class="btn">← Вернуться к заметкам</a>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        // ---------- Управление темой ----------
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                if (btn.dataset.theme === theme) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        (function initTheme() {
+            const saved = localStorage.getItem('theme') || 'light';
+            setTheme(saved);
+        })();
+
+        // ---------- Уведомления ----------
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toast.onclick = () => removeToast(toast);
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => removeToast(toast), 4000);
+        }
+
+        function removeToast(toast) {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }
+
+        // ---------- Отображение имени выбранного файла ----------
+        const fileInput = document.getElementById('fileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileLabel.textContent = `📄 ${fileInput.files[0].name}`;
+            } else {
+                fileLabel.textContent = '📂 Выберите файл';
+            }
+        });
+
+        // ---------- Загрузка списка категорий ----------
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                if (!response.ok) throw new Error('Ошибка загрузки категорий');
+                const categories = await response.json();
+                const select = document.getElementById('categorySelect');
+                select.innerHTML = '<option value="">Выберите категорию</option>';
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error(err);
+                showToast('Не удалось загрузить список категорий', 'error');
+            }
+        }
+
+        // ---------- Отправка формы импорта ----------
+        const importForm = document.getElementById('importForm');
+        importForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(importForm);
+            const file = formData.get('file');
+            const category = formData.get('category');
+            const title = formData.get('title');
+
+            if (!file || !category || !title) {
+                showToast('Заполните все поля и выберите файл', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast(result.message || 'Заметка успешно импортирована', 'success');
+                    importForm.reset();
+                    fileLabel.textContent = '📂 Выберите файл';
+                    loadCategories();
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Ошибка импорта', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Ошибка соединения с сервером', 'error');
+            }
+        });
+
+        // ---------- Экспорт ----------
+        document.getElementById('exportTxtBtn').addEventListener('click', () => {
+            window.location.href = '/export/txt';
+        });
+        document.getElementById('exportDocBtn').addEventListener('click', () => {
+            window.location.href = '/export/doc';
+        });
+
+        // Инициализация
+        loadCategories();
+    </script>
+</body>
+</html>

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --tech-green: #3ADF68;
+            --ozon-blue: #005BFF;
+            --anti-flash-white: #F1F1F1;
+            --dark-cerulean: #134C6E;
+            --prussian-blue: #0A3956;
+            --oxford-blue: #032B44;
+            --note-count-bg: var(--prussian-blue);
+            --note-count-color: white;
+            --btn-edit-bg: var(--tech-green);
+            --btn-edit-bg-hover: #2BB854;
+            --btn-delete-bg: #DC3545;
+            --btn-delete-bg-hover: #C82333;
+            --btn-primary-bg: var(--ozon-blue);
+            --btn-primary-bg-hover: #0046CC;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--oxford-blue);
+            background-color: var(--anti-flash-white);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: xx2px solid var(--prussian-blue);
+        }
+        
+        .header h1 {
+            color: var(--prussian-blue);
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header nav a {
+            color: var(--ozon-blue);
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .header nav a:hover {
+            background-color: var(--anti-flash-white);
+        }
+        
+        .section-edit-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid var(--dark-cerulean);
+        }
+        
+        .rename-form, .notes-list, .danger-zone {
+            padding: 25px;
+            border-bottom: 1px solid var(--anti-flash-white);
+        }
+        
+        .rename-form:last-child, .notes-list:last-child, .danger-zone:last-child {
+            border-bottom: none;
+        }
+        
+        h2 {
+            color: var(--prussian-blue);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark-cerulean);
+        }
+        
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--anti-flash-white);
+            border-radius:和新 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--ozon-blue);
+        }
+        
+        /* ОБНОВЛЕННЫЕ СТИЛИ КНОПОК как в вашем примере */
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            min-width: 70px;
+            background: #fff;
+            color: var(--prussian-blue);
+            box-shadow: 0 2px 4px rgba(10, 57, 86, 0.1);
+            border: 1px solid var(--dark-cerulean);
+            user-select: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(10, 57, 86, 0.2);
+            background: #F9F9F9;
+        }
+        
+        .btn-primary {
+            background: var(--dark-cerulean);
+            color: white;
+            border-color: var(--prussian-blue);
+        }
+        
+        .btn-primary:hover {
+            background: var(--prussian-blue);
+            border-color: var(--prussian-blue);
+        }
+        
+        .btn-danger {
+            background: var(--btn-delete-bg);
+            color: white;
+            border-color: var(--btn-delete-bg-hover);
+        }
+        
+        .btn-danger:hover {
+            background: var(--btn-delete-bg-hover);
+            border-color: #A71E2A;
+        }
+        
+        .btn-edit {
+            background: var(--tech-green);
+            color: white;
+            border-color: #2ECC71;
+        }
+        
+        .btn-edit:hover {
+            background: #28A745;
+            border-color: #1E7E34;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--dark-cerulean);
+            border: 2px solid var(--dark-cerulean);
+            box-shadow: 0 2px 4px rgba(10, 57, 86, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--anti-flash-white);
+            color: var(--prussian-blue);
+            border-color: var(--prussian-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(10, 57, 86, 0.2);
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8em;
+            min-width: 60px;
+        }
+        
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--anti-flash-white);
+            transition: background-color 0.3s;
+        }
+        
+        .note-item:hover {
+            background-color: var(--anti-flash-white);
+        }
+        
+        .note-item:last-child {
+            border-bottom: none;
+        }
+        
+        .note-content {
+            flex: 1;
+        }
+        
+        .note-content h3 {
+            color: var(--prussian-blue);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .note-content p {
+            color: var(--dark-cerulean);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-clamp: 2;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .note-actions select {
+            padding: 8px 12px;
+            border: 2px solid var(--anti-flash-white);
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        
+        .note-actions select:focus {
+            outline: none;
+            border-color: var(--ozon-blue);
+        }
+        
+        .note-actions .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid var(--dark-cerulean);
+        }
+        
+        .modal h3 {
+            margin-bottom: 20px;
+            color: var(--prussian-blue);
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .flash {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--dark-cerulean);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* Стили для toast-уведомлений */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--oxford-blue);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .toast.success { background: var(--tech-green); }
+        .toast.error { background: var(--btn-delete-bg); }
+        .toast.info { background: var(--ozon-blue); }
+        
+        @media (max-width: 768px) {
+            .note-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .note-actions {
+                justify-content: stretch;
+            }
+            
+            .note-actions select {
+                width: 100%;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>{{.Title}}</h1>
+            <nav>
+                <a href="/" class="btn btn-secondary">← На главную</a>
+            </nav>
+        </header>
+        <div class="section-edit-container">
+            {{if .Flash}}
+            <div class="flash">{{.Flash}}</div>
+            {{end}}
+            <div class="rename-form">
+                <h2>✏️ Переименовать раздел</h2>
+                <form id="renameForm" onsubmit="renameSection(event); return false;">
+                    <input type="hidden" name="old_section" value="{{.Section}}">
+                    <div class="form-group">
+                        <label for="newSectionName">Новое название раздела:</label>
+                        <input type="text" id="newSectionName" name="new_section" value="{{.Section}}" required 
+                               placeholder="Введите новое название">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                </form>
+            </div>
+            <div class="notes-list">
+                <h2>📝 Заметки в разделе ({{len .Notes}})</h2>
+                {{if .Notes}}
+                {{range .Notes}}
+                <div class="note-item">
+                    <div class="note-content">
+                        <h3>{{.Title}}</h3>
+                        <p>{{.Content}}</p>
+                    </div>
+                    <div class="note-actions">
+                        <select onchange="moveNote(this, '{{.Path}}')">
+                            <option value="">📂 Переместить в...</option>
+                            {{range $sectionName, $notes := $.AllSections}}
+                                {{if ne $sectionName $.Section}}
+                                <option value="{{$sectionName}}">{{$sectionName}}</option>
+                                {{end}}
+                            {{end}}
+                            <option value="__new__">➕ Новый раздел...</option>
+                        </select>
+                        <a href="/edit/{{.Path}}" class="btn btn-edit btn-small">Редактировать</a>
+                        <a href="/view/{{.Path}}" class="btn btn-primary btn-small">Просмотреть</a>
+                    </div>
+                </div>
+                {{end}}
+                {{else}}
+                <div class="empty-state">
+                    <div>📁</div>
+                    <h3>В этом разделе пока нет заметок</h3>
+                    <p>Создайте первую заметку, чтобы она появилась здесь</p>
+                </div>
+                {{end}}
+            </div>
+            <div class="danger-zone">
+                <h2>⚠️ Опасная зона</h2>
+                <p style="margin-bottom: 15px; color: var(--dark-cerulean);">
+                    Удаление раздела приведет к безвозвратному удалению всех заметок внутри него.
+                    Это действие нельзя отменить!
+                </p>
+                <form action="/delete-section/{{.Section | urlquery}}" method="POST" 
+                      onsubmit="return confirm('Вы уверены, что хотите удалить раздел &quot;{{.Section}}&quot; и все его заметки? Это действие нельзя отменить!')">
+                    <button type="submit" class="btn btn-danger">🗑️ Удалить раздел и все заметки</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="newSectionModal" class="modal">
+        <div class="modal-content">
+            <h3>Создать новый раздел</h3>
+            <form id="newSectionForm">
+                <div class="form-group">
+                    <label for="newSectionNameInput">Название нового раздела:</label>
+                    <input type="text" id="newSectionNameInput" required 
+                           placeholder="Введите название раздела">
+                </div>
+                <input type="hidden" id="noteToMove">
+                <div class="form-actions">
+                    <button type="button" onclick="cancelMove()" class="btn btn-secondary">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать и переместить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="toastContainer"></div>
+    <script>
+// Функция показа уведомлений
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    toast.onclick = () => removeToast(toast);
+    
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+    
+    setTimeout(() => removeToast(toast), 3000);
+}
+function removeToast(toast) {
+    toast.classList.remove('show');
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 300);
+}
+// Функция переименования раздела
+function renameSection(event) {
+    event.preventDefault();
+    
+    const oldSection = document.querySelector('input[name="old_section"]').value;
+    const newSection = document.querySelector('input[name="new_section"]').value;
+    
+    console.log('Отправка запроса переименования:', oldSection, '->', newSection);
+    
+    const params = new URLSearchParams();
+    params.append('old_section', oldSection);
+    params.append('new_section', newSection);
+    
+    showToast('Переименование...', 'info');
+    
+    fetch('/rename-section', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: params.toString()
+    })
+    .then(response => {
+        if (response.ok) {
+            showToast('✅ Раздел успешно переименован', 'success');
+            // Обновляем страницу с новым URL
+            setTimeout(() => {
+                // Кодируем новое имя раздела для URL
+                const encodedSection = encodeURIComponent(newSection);
+                window.location.href = `/edit-section/${encodedSection}`;
+            }, 1500);
+        } else {
+            return response.text().then(text => {
+                throw new Error(text || `Ошибка сервера: ${response.status}`);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        let errorMessage = error.message;
+        if (errorMessage.length > 100) {
+            errorMessage = errorMessage.substring(0, 100) + '...';
+        }
+        showToast('❌ ' + errorMessage, 'error');
+    });
+}
+// Функция перемещения заметки
+function moveNote(select, notePath) {
+    const newSection = select.value;
+    if (!newSection) {
+        select.selectedIndex = 0;
+        return;
+    }
+    
+    if (newSection === '__new__') {
+        document.getElementById('noteToMove').value = notePath;
+        document.getElementById('newSectionModal').style.display = 'flex';
+        select.selectedIndex = 0;
+        return;
+    }
+    
+    if (confirm(`Переместить заметку в раздел "${newSection}"?`)) {
+        const params = new URLSearchParams();
+        params.append('note_path', notePath);
+        params.append('new_section', newSection);
+        
+        showToast('Перемещение...', 'info');
+        
+        fetch('/move-note', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: params.toString()
+        })
+极    .then(response => {
+        if (response.ok) {
+            // Если ответ успешный, просто показываем общее сообщение
+            showToast('✅ Заметка успешно перемещена', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            // Для ошибок пытаемся получить текст, но не показываем HTML
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showToast('❌ Не удалось переместить заметку', 'error');
+        select.selectedIndex = 0;
+    });
+} else {
+    select.selectedIndex = 0;
+}
+}
+// Обработчик формы создания нового раздела
+document.getElementById('newSectionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newSection = document.getElementById极('newSectionNameInput').value.trim();
+    const notePath = document.getElementById('noteToMove').value;
+    
+    if (!newSection) {
+        showToast('❌ Введите название раздела', 'error');
+        return;
+    }
+    
+    showToast('Создание раздела...', 'info');
+    
+    const params = new URLSearchParams();
+    params.append('note_path', notePath);
+    params.append('new_section', newSection);
+    
+    fetch('/move极-note', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: params.toString()
+    })
+    .then(response => {
+        if (response.ok) {
+            showToast('✅ Раздел создан и заметка перемещена', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showToast('❌ Не удалось создать раздел', 'error');
+    });
+});
+// Вспомогательная функция для извлечения текста из HTML
+function extractTextFromHtml(html) {
+    if (!html) return '';
+    
+    // Если это не HTML, возвращаем как есть
+    if (!html.includes('<') && !html.includes('>')) {
+        return html.trim();
+    }
+    
+    try {
+        // Создаем временный элемент для извлечения текста
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        return tempDiv.textContent || tempDiv.innerText || '';
+    } catch (e) {
+        console.warn('Не удалось распарсить HTML:', e);
+        return html.replace(/<[^>]*>/g, '').trim();
+    }
+}
+// Обработчик формы создания нового раздела
+document.getElementById('newSectionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newSection = document.getElementById('newSectionNameInput').value.trim();
+    const notePath = document.getElementById('noteTo极Move').value;
+    
+    if (!newSection) {
+        showToast('❌ Введите название раздела', 'error');
+        return;
+    }
+    
+    showToast('Создание раздела...', 'info');
+    
+    const params = new URLSearchParams();
+    params.append('note_path', notePath);
+    params.append('new_section', newSection);
+    
+    fetch('/move-note', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: params.toString()
+    })
+    .then(response => {
+        const contentType = response.headers.get('content-type') || '';
+        
+        if (response.ok) {
+            if (contentType.includes('application/json')) {
+                return response.json().then(data => {
+                    showToast('✅ ' + data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                });
+            } else {
+                return response.text().then(text => {
+                    const cleanText = extractTextFromHtml(text);
+                    showToast('✅ ' + cleanText, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                });
+            }
+        } else {
+            return response.text().then(text => {
+                let errorMessage = extractTextFromHtml(text);
+                if (!errorMessage) {
+                    errorMessage = `Ошибка сервера: ${response.status} ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        let errorMessage = error.message;
+        errorMessage = extractTextFromHtml(errorMessage);
+        showToast('❌ ' + errorMessage, 'error');
+    });
+});
+// Функции для модального окна
+function cancelMove() {
+    document.getElementById('newSectionModal').style.display = 'none';
+    document.getElementById('newSectionNameInput').value = '';
+    
+    document.querySelectorAll('select').forEach(select => {
+        select.selectedIndex = 0;
+    });
+}
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('newSectionModal');
+    if (event.target === modal) {
+        cancelMove();
+    }
+});
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        cancelMove();
+    }
+});
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!-- Добавьте форму фильтрации -->
+<form action="/search" method="GET" class="search-form">
+    <input type="search" name="q" value="{{.Query}}" placeholder="Введите поисковый запрос..." required>
+    <select name="section">
+        <option value="">Все разделы</option>
+        {{range .Sections}}
+        <option value="{{.}}" {{if eq . $.SectionFilter}}selected{{end}}>{{.}}</option>
+        {{end}}
+    </select>
+    <button type="submit">Найти</button>
+</form>

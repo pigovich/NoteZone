@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --tech-green: #3ADF68;
+            --ozon-blue: #005BFF;
+            --anti-flash-white: #F1F1F1;
+            --dark-cerulean: #134C6E;
+            --prussian-blue: #0A3956;
+            --oxford-blue: #032B44;
+            --btn-primary-bg: var(--ozon-blue);
+            --btn-primary-bg-hover: #0046CC;
+            --btn-danger-bg: #DC3545;
+            --btn-danger-bg-hover: #C82333;
+            --border-color: var(--dark-cerulean);
+            --primary-color: var(--ozon-blue);
+            --success-color: var(--tech-green);
+            --error-color: var(--btn-danger-bg);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'GT Eesti Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--anti-flash-white);
+            color: var(--oxford-blue);
+            padding: 20px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid var(--dark-cerulean);
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: var(--prussian-blue);
+            border-bottom: 2px solid var(--oxford-blue);
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--dark-cerulean);
+            border: 1px solid var(--oxford-blue);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .back-btn:hover {
+            background: var(--oxford-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            flex-grow: 1;
+            color: white;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--prussian-blue);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--dark-cerulean);
+            border-radius: 6px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--ozon-blue);
+            box-shadow: 0 0 0 3px rgba(0, 91, 255, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 200px;
+        }
+
+        .form-select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134C6E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .new-section-input {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .new-section-input.show {
+            display: block;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        /* Кнопка «Сохранить изменения» */
+        .btn-primary {
+            background: white;
+            color: var(--dark-cerulean);
+            border: 2px solid var(--dark-cerulean);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--anti-flash-white);
+            color: var(--prussian-blue);
+            border-color: var(--prussian-blue);
+        }
+
+        /* Кнопка «Отмена» */
+        .btn-secondary {
+            background: var(--dark-cerulean);
+            color: white;
+            border: 2px solid var(--prussian-blue);
+        }
+
+        .btn-secondary:hover {
+            background: var(--prussian-blue);
+            color: white;
+            border-color: var(--prussian-blue);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: var(--btn-danger-bg);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(3, 43, 68, 0.2);
+            cursor: pointer;
+            color: white;
+            font-weight: 500;
+            border: 2px solid transparent;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .toast.success { 
+            background: var(--tech-green);
+            border-color: #2BB854;
+            color: var(--oxford-blue);
+        }
+        
+        .toast.error { 
+            background: var(--btn-danger-bg);
+            border-color: var(--btn-danger-bg-hover);
+        }
+        
+        .toast.info { 
+            background: var(--ozon-blue);
+            border-color: var(--btn-primary-bg-hover);
+        }
+
+        /* Loading state */
+        .form-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .form-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body data-flash="{{.Flash}}">
+    <div class="container">
+        <header class="header">
+            <a href="/view/{{.NotePath}}" class="back-btn">← Назад</a>
+            <h1>{{.Title}}</h1>
+        </header>
+        <main class="form-container">
+            <form id="noteForm" class="note-form">
+                <input type="hidden" name="old_path" value="{{.NotePath}}">
+                
+                <div class="form-group">
+                    <label>Раздел:</label>
+                    <select id="sectionSelect" name="section" class="form-select">
+                        <option value="">-- Выберите раздел --</option>
+                        {{range .Sections}}
+                        <option value="{{.}}" {{if eq . $.Section}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                        <option value="__new__">+ Создать новый раздел</option>
+                    </select>
+                    <input type="text" id="newSectionInput" name="new_section" 
+                           class="form-input new-section-input" placeholder="Введите название нового раздела">
+                    <div id="sectionError" class="error-message"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="title">Название заметки:</label>
+                    <input type="text" id="title" name="title" value="{{.NoteTitle}}" required 
+                           class="form-input" placeholder="Введите название заметки">
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">Содержимое:</label>
+                    <textarea id="content" name="content" required class="form-textarea"
+                              placeholder="Введите содержимое заметки" rows="10">{{.Content}}</textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Сохранить изменения</button>
+                    <a href="/view/{{.NotePath}}" class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <div id="toastContainer"></div>
+    
+    <script>
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        toast.onclick = () => removeToast(toast);
+        
+        container.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+        
+        setTimeout(() => removeToast(toast), 3000);
+    }
+
+    function removeToast(toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+
+    function toggleSectionInput() {
+        const select = document.getElementById('sectionSelect');
+        const newSectionInput = document.getElementById('newSectionInput');
+        const currentSection = "{{.Section}}";
+        
+        if (select.value === '__new__') {
+            newSectionInput.style.display = 'block';
+            newSectionInput.setAttribute('required', 'required');
+            if (currentSection && !Array.from(select.options).some(opt => opt.value === currentSection)) {
+                newSectionInput.value = currentSection;
+            }
+            newSectionInput.focus();
+        } else {
+            newSectionInput.style.display = 'none';
+            newSectionInput.removeAttribute('required');
+            newSectionInput.value = '';
+        }
+    }
+
+    async function submitForm() {
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('noteForm');
+        const select = document.getElementById('sectionSelect');
+        const newSectionInput = document.getElementById('newSectionInput');
+        
+        const params = new URLSearchParams();
+        params.append('old_path', document.querySelector('input[name="old_path"]').value);
+        params.append('title', document.getElementById('title').value.trim());
+        params.append('content', document.getElementById('content').value.trim());
+        
+        if (select.value === '__new__' && newSectionInput.value.trim() !== '') {
+            params.append('new_section', newSectionInput.value.trim());
+            params.append('section', '');
+        } else if (select.value !== '' && select.value !== '__new__') {
+            params.append('section', select.value);
+            params.append('new_section', '');
+        } else {
+            showToast('Пожалуйста, выберите или создайте раздел', 'error');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Сохранение...';
+        form.classList.add('form-loading');
+
+        try {
+            const response = await fetch('/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: params.toString()
+            });
+
+            if (response.ok) {
+                const message = await response.text();
+                showToast(message, 'success');
+                
+                const section = params.get('section') || params.get('new_section');
+                const title = params.get('title');
+                const newPath = encodeURIComponent(section + '/' + title);
+                
+                setTimeout(() => {
+                    window.location.href = '/view/' + newPath;
+                }, 1500);
+            } else {
+                const errorText = await response.text();
+                showToast('Ошибка: ' + errorText, 'error');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showToast('Ошибка соединения', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Сохранить изменения';
+            form.classList.remove('form-loading');
+        }
+    }
+
+    document.getElementById('noteForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const select = document.getElementById('sectionSelect');
+        const newSectionInput = document.getElementById('newSectionInput');
+        const sectionError = document.getElementById('sectionError');
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('content').value.trim();
+        
+        sectionError.style.display = 'none';
+        
+        if (!title) {
+            showToast('Введите название заметки', 'error');
+            document.getElementById('title').focus();
+            return;
+        }
+        
+        if (!content) {
+            showToast('Введите содержимое заметки', 'error');
+            document.getElementById('content').focus();
+            return;
+        }
+        
+        if (select.value === '' && newSectionInput.value.trim() === '') {
+            sectionError.style.display = 'block';
+            sectionError.textContent = 'Пожалуйста, выберите раздел или создайте новый';
+            return;
+        }
+        
+        if (select.value === '__new__' && newSectionInput.value.trim() === '') {
+            sectionError.style.display = 'block';
+            sectionError.textContent = 'Пожалуйста, введите название нового раздела';
+            newSectionInput.focus();
+            return;
+        }
+
+        submitForm();
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentSection = "{{.Section}}";
+        const select = document.getElementById('sectionSelect');
+        const newSectionInput = document.getElementById('newSectionInput');
+        
+        const existingOptions = Array.from(select.options).map(opt => opt.value);
+        if (currentSection && !existingOptions.includes(currentSection)) {
+            select.value = '__new__';
+            newSectionInput.value = currentSection;
+        } else if (existingOptions.includes(currentSection)) {
+            select.value = currentSection;
+        }
+        
+        toggleSectionInput();
+        document.getElementById('sectionSelect').addEventListener('change', toggleSectionInput);
+        
+        const flashMessage = document.body.getAttribute('data-flash');
+        if (flashMessage) {
+            showToast(flashMessage, 'success');
+        }
+    });
+    </script>
+</body>
+</html>

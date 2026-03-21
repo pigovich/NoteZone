@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .sections-nav {
+            display: flex;
+            gap: -- 10px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .section-nav-btn {
+            padding: 8px 16px;
+            border: 2px solid #3498db;
+            border-radius: 20px;
+            background: white;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .section-nav-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .section-nav-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .empty-section {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .empty-section h3 {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .section-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .notes-count {
+            background: #e9ecef;
+            color: #6c757d;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section-header">
+            <h1>{{.Title}}</h1>
+            <a href="/new?section={{.SectionName}}" class="btn btn-primary">+ Добавить в этот раздел</a>
+        </div>
+
+        <!-- Навигация по разделам -->
+        <div class="sections-nav">
+            <a href="/" class="section-nav-btn">Все заметки</a>
+            {{range .AllSections}}
+            <a href="/section/{{.}}" class="section-nav-btn {{if eq . $.SectionName}}active{{end}}">{{.}}</a>
+            {{end}}
+        </div>
+
+        <div class="section-info">
+            <h2>Заметки раздела</h2>
+            <span class="notes-count">{{len .Notes}} заметок</span>
+        </div>
+
+        {{if .Notes}}
+        <div class="notes-grid">
+            {{range .Notes}}
+            <div class="note-card" onclick="window.location='/view/{{.FullPath}}'">
+                <div class="note-header">
+                    <h3>{{.Title}}</h3>
+                </div>
+                <div class="note-content">{{.ShortContent}}</div>
+                <div class="note-actions">
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); copyToClipboard('{{.Title}}')">
+                        Копировать
+                    </button>
+                    <a href="/edit/{{.FullPath}}" class="btn btn-secondary" onclick="event.stopPropagation();">
+                        Редактировать
+                    </a>
+                    <form action="/delete/{{.FullPath}}" method="POST" 
+                          onsubmit="return confirm('Удалить эту заметку?');" 
+                          style="display: inline;">
+                        <button type="submit" class="btn btn-danger" onclick="event.stopPropagation();">
+                            Удалить
+                        </button>
+                    </form>
+                </div>
+                <textarea id="hidden-text-{{.Title}}" class="hidden">{{.Content}}</textarea>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="empty-section">
+            <h3>В этом разделе пока нет заметок</h3>
+            <p>Создайте первую заметку в этом разделе</p>
+            <a href="/new?section={{.SectionName}}" class="btn btn-primary">Создать первую заметку</a>
+        </div>
+        {{end}}
+    </div>
+
+    <script>
+        function copyToClipboard(noteId) {
+            const hiddenTextArea = document.getElementById(`hidden-text-${noteId}`);
+            hiddenTextArea.select();
+            hiddenTextArea.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            // Показываем уведомление
+            alert('Текст скопирован в буфер обмена!');
+        }
+
+        // Добавляем быструю навигацию клавишами
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>
