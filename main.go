@@ -206,37 +206,60 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	notePath := strings.TrimPrefix(r.URL.Path, "/view/")
-	if notePath == "" {
+	// Получаем полный путь после /view/
+	rawPath := strings.TrimPrefix(r.URL.Path, "/view/")
+	if rawPath == "" {
 		http.NotFound(w, r)
 		return
 	}
-	fullPath := filepath.Join("notes", notePath+".txt")
+
+	// Декодируем URL (преобразуем %D0%9F обратно в кириллицу)
+	decodedPath, err := url.QueryUnescape(rawPath)
+	if err != nil {
+		log.Printf("Ошибка декодирования URL: %v", err)
+		decodedPath = rawPath
+	}
+
+	// Разделяем на раздел и название заметки
+	parts := strings.SplitN(decodedPath, "/", 2)
+	if len(parts) != 2 {
+		http.Error(w, "Некорректный формат пути. Ожидается: /view/раздел/название", http.StatusBadRequest)
+		return
+	}
+
+	section := parts[0]
+	noteTitle := parts[1]
+
+	// Формируем путь к файлу
+	fullPath := filepath.Join("notes", section, noteTitle+".txt")
+
+	// Проверка безопасности пути
 	if !strings.HasPrefix(filepath.Clean(fullPath), filepath.Clean("notes")+string(os.PathSeparator)) {
 		http.Error(w, "Недопустимый путь", http.StatusBadRequest)
 		return
 	}
+
+	// Проверяем существование файла
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		http.NotFound(w, r)
 		return
 	}
+
+	// Читаем содержимое
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		log.Printf("Ошибка чтения файла %s: %v", fullPath, err)
 		http.Error(w, "Ошибка чтения файла", http.StatusInternalServerError)
 		return
 	}
-	section := filepath.Dir(notePath)
-	if section == "." {
-		section = "Общие"
-	}
-	title := strings.TrimSuffix(filepath.Base(notePath), ".txt")
+
 	note := Note{
-		Title:   title,
+		Title:   noteTitle,
 		Content: string(content),
 		Section: section,
-		Path:    notePath,
+		Path:    filepath.Join(section, noteTitle),
 	}
+
 	data := struct {
 		Note
 		Flash string
@@ -244,6 +267,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 		Note:  note,
 		Flash: getFlash(w, r),
 	}
+
 	tmpl := template.Must(template.ParseFiles("templates/view.html"))
 	err = tmpl.Execute(w, data)
 	if err != nil {
@@ -258,27 +282,39 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
+
 	notePath := strings.TrimPrefix(r.URL.Path, "/delete/")
 	if notePath == "" {
 		http.NotFound(w, r)
 		return
 	}
-	fullPath := filepath.Join("notes", notePath+".txt")
+
+	// Декодируем URL
+	decodedPath, err := url.QueryUnescape(notePath)
+	if err != nil {
+		log.Printf("Ошибка декодирования URL: %v", err)
+		decodedPath = notePath
+	}
+
+	fullPath := filepath.Join("notes", decodedPath+".txt")
 	if !strings.HasPrefix(filepath.Clean(fullPath), filepath.Clean("notes")+string(os.PathSeparator)) {
 		http.Error(w, "Недопустимый путь", http.StatusBadRequest)
 		return
 	}
+
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		http.NotFound(w, r)
 		return
 	}
+
 	log.Printf("Удаление заметки: %s", fullPath)
-	err := os.Remove(fullPath)
+	err = os.Remove(fullPath)
 	if err != nil {
 		log.Printf("Ошибка удаления файла %s: %v", fullPath, err)
 		http.Error(w, "Ошибка удаления файла", http.StatusInternalServerError)
 		return
 	}
+
 	updateNotesCache()
 	setFlash(w, "Заметка успешно удалена")
 	log.Printf("Заметка успешно удалена: %s", fullPath)
@@ -319,32 +355,39 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
+
 	err := r.ParseForm()
 	if err != nil {
 		log.Printf("Ошибка парсинга формы при сохранении: %v", err)
 		http.Error(w, "Ошибка обработки формы", http.StatusBadRequest)
 		return
 	}
+
 	section := r.FormValue("section")
 	newSection := r.FormValue("new_section")
 	title := r.FormValue("title")
 	content := r.FormValue("content")
+
 	finalSection := section
 	if section == "" && newSection != "" {
 		finalSection = newSection
 	}
+
 	if finalSection == "" || title == "" || content == "" {
 		http.Error(w, "Все поля обязательны для заполнения", http.StatusBadRequest)
 		return
 	}
+
 	finalSection = strings.Trim(finalSection, "/\\")
 	if finalSection == "." {
 		finalSection = "Общие"
 	}
+
 	if !isValidFilename(title) || !isValidFilename(finalSection) {
 		http.Error(w, "Недопустимые символы в названии", http.StatusBadRequest)
 		return
 	}
+
 	sectionPath := filepath.Join("notes", finalSection)
 	err = os.MkdirAll(sectionPath, 0755)
 	if err != nil {
@@ -352,11 +395,13 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка создания раздела: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	filePath := filepath.Join(sectionPath, title+".txt")
 	if _, err := os.Stat(filePath); err == nil {
 		http.Error(w, "Заметка с таким названием уже существует", http.StatusBadRequest)
 		return
 	}
+
 	log.Printf("Создание заметки: раздел=%s, название=%s", finalSection, title)
 	err = os.WriteFile(filePath, []byte(content), 0644)
 	if err != nil {
@@ -364,11 +409,19 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка сохранения файла: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	updateNotesCache()
 	setFlash(w, "Заметка успешно создана")
 	log.Printf("Заметка успешно создана: %s", filePath)
-	newPath := filepath.Join(finalSection, title)
-	http.Redirect(w, r, "/view/"+newPath, http.StatusSeeOther)
+
+	// Кодируем раздел и название для URL
+	encodedSection := url.QueryEscape(finalSection)
+	encodedTitle := url.QueryEscape(title)
+
+	// Формируем правильный URL
+	redirectURL := "/view/" + encodedSection + "/" + encodedTitle
+
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
@@ -376,36 +429,56 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
+
 	notePath := strings.TrimPrefix(r.URL.Path, "/edit/")
 	if notePath == "" {
 		http.NotFound(w, r)
 		return
 	}
-	fullPath := filepath.Join("notes", notePath+".txt")
+
+	// Декодируем URL
+	decodedPath, err := url.QueryUnescape(notePath)
+	if err != nil {
+		log.Printf("Ошибка декодирования URL: %v", err)
+		decodedPath = notePath
+	}
+
+	// Разделяем на раздел и название
+	parts := strings.SplitN(decodedPath, "/", 2)
+	if len(parts) != 2 {
+		http.Error(w, "Некорректный формат пути. Ожидается: /edit/раздел/название", http.StatusBadRequest)
+		return
+	}
+
+	section := parts[0]
+	title := parts[1]
+
+	fullPath := filepath.Join("notes", section, title+".txt")
+
+	// Проверка безопасности
 	if !strings.HasPrefix(filepath.Clean(fullPath), filepath.Clean("notes")+string(os.PathSeparator)) {
 		http.Error(w, "Недопустимый путь", http.StatusBadRequest)
 		return
 	}
+
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		http.NotFound(w, r)
 		return
 	}
+
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		log.Printf("Ошибка чтения файла %s: %v", fullPath, err)
 		http.Error(w, "Ошибка чтения файла", http.StatusInternalServerError)
 		return
 	}
-	section := filepath.Dir(notePath)
-	if section == "." {
-		section = "Общие"
-	}
-	title := strings.TrimSuffix(filepath.Base(notePath), ".txt")
+
 	notes := loadNotesCached()
 	sections := make([]string, 0, len(notes))
 	for s := range notes {
 		sections = append(sections, s)
 	}
+
 	funcMap := template.FuncMap{
 		"contains": func(slice []string, item string) bool {
 			for _, s := range slice {
@@ -420,15 +493,17 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 			return str
 		},
 	}
+
 	data := map[string]interface{}{
 		"Title":     "Редактировать заметку",
 		"Sections":  sections,
 		"Section":   section,
 		"NoteTitle": title,
 		"Content":   string(content),
-		"NotePath":  notePath,
+		"NotePath":  decodedPath, // Сохраняем декодированный путь
 		"Flash":     getFlash(w, r),
 	}
+
 	tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("templates/edit.html"))
 	err = tmpl.Execute(w, data)
 	if err != nil {
@@ -442,53 +517,64 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
+
 	err := r.ParseForm()
 	if err != nil {
 		log.Printf("Ошибка парсинга формы при обновлении: %v", err)
 		http.Error(w, "Ошибка обработки формы", http.StatusBadRequest)
 		return
 	}
+
 	oldPath := r.FormValue("old_path")
 	section := r.FormValue("section")
 	newSection := r.FormValue("new_section")
 	title := r.FormValue("title")
 	content := r.FormValue("content")
+
 	finalSection := strings.TrimSpace(section)
 	if finalSection == "" {
 		finalSection = strings.TrimSpace(newSection)
 	}
+
 	title = strings.TrimSpace(title)
 	content = strings.TrimSpace(content)
 	finalSection = strings.TrimSpace(finalSection)
+
 	if finalSection == "" {
 		log.Printf("Ошибка валидации: finalSection пусто")
 		http.Error(w, "Раздел не может быть пустым", http.StatusBadRequest)
 		return
 	}
+
 	if title == "" {
 		log.Printf("Ошибка валидации: title пусто")
 		http.Error(w, "Название не может быть пустым", http.StatusBadRequest)
 		return
 	}
+
 	if content == "" {
 		log.Printf("Ошибка валидации: content пусто")
 		http.Error(w, "Содержимое не может быть пустым", http.StatusBadRequest)
 		return
 	}
+
 	finalSection = strings.Trim(finalSection, "/\\")
 	if finalSection == "." {
 		finalSection = "Общие"
 	}
+
 	if !isValidFilename(title) {
 		log.Printf("Ошибка валидации: недопустимое название '%s'", title)
 		http.Error(w, "Недопустимые символы в названии заметки", http.StatusBadRequest)
 		return
 	}
+
 	if !isValidFilename(finalSection) {
 		log.Printf("Ошибка валидации: недопустимое название раздела '%s'", finalSection)
 		http.Error(w, "Недопустимые символы в названии раздела", http.StatusBadRequest)
 		return
 	}
+
 	sectionPath := filepath.Join("notes", finalSection)
 	err = os.MkdirAll(sectionPath, 0755)
 	if err != nil {
@@ -496,8 +582,10 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка создания раздела", http.StatusInternalServerError)
 		return
 	}
+
 	newFullPath := filepath.Join(sectionPath, title+".txt")
 	oldFullPath := filepath.Join("notes", oldPath+".txt")
+
 	if oldFullPath != newFullPath {
 		if _, err := os.Stat(newFullPath); err == nil {
 			log.Printf("Ошибка: файл уже существует %s", newFullPath)
@@ -505,7 +593,9 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 	log.Printf("Обновление заметки: старая_путь=%s, новый_раздел=%s, новое_название=%s", oldPath, finalSection, title)
+
 	if oldFullPath != newFullPath {
 		err := os.Remove(oldFullPath)
 		if err != nil && !os.IsNotExist(err) {
@@ -514,12 +604,14 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 	err = os.WriteFile(newFullPath, []byte(content), 0644)
 	if err != nil {
 		log.Printf("Ошибка сохранения файла %s: %v", newFullPath, err)
 		http.Error(w, "Ошибка сохранения файла", http.StatusInternalServerError)
 		return
 	}
+
 	updateNotesCache()
 	log.Printf("Заметка успешно обновлена: %s", newFullPath)
 	w.WriteHeader(http.StatusOK)
@@ -557,31 +649,37 @@ func deleteSectionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
+
 	sectionName := strings.TrimPrefix(r.URL.Path, "/delete-section/")
 	if sectionName == "" {
 		http.Error(w, "Имя раздела обязательно", http.StatusBadRequest)
 		return
 	}
+
 	var err error
 	sectionName, err = url.QueryUnescape(sectionName)
 	if err != nil {
 		http.Error(w, "Некорректное имя раздела", http.StatusBadRequest)
 		return
 	}
+
 	if sectionName == "" || sectionName == "." || sectionName == ".." ||
 		strings.Contains(sectionName, "..") {
 		http.Error(w, "Недопустимое имя раздела", http.StatusBadRequest)
 		return
 	}
+
 	if sectionName == "Общие" {
 		http.Error(w, "Нельзя удалить раздел 'Общие'", http.StatusForbidden)
 		return
 	}
+
 	sectionPath := filepath.Join("notes", sectionName)
 	if _, err := os.Stat(sectionPath); os.IsNotExist(err) {
 		http.Error(w, "Раздел не найден", http.StatusNotFound)
 		return
 	}
+
 	log.Printf("Удаление раздела: %s", sectionPath)
 	err = os.RemoveAll(sectionPath)
 	if err != nil {
@@ -589,6 +687,7 @@ func deleteSectionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка удаления раздела", http.StatusInternalServerError)
 		return
 	}
+
 	updateNotesCache()
 	log.Printf("Раздел успешно удален: %s", sectionPath)
 	w.WriteHeader(http.StatusOK)
@@ -734,9 +833,16 @@ func moveNoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	oldFullPath := filepath.Join("notes", notePath+".txt")
+	// Декодируем путь заметки
+	decodedNotePath, err := url.QueryUnescape(notePath)
+	if err != nil {
+		log.Printf("Ошибка декодирования пути заметки: %v", err)
+		decodedNotePath = notePath
+	}
+
+	oldFullPath := filepath.Join("notes", decodedNotePath+".txt")
 	newSectionPath := filepath.Join("notes", newSection)
-	newFullPath := filepath.Join(newSectionPath, filepath.Base(notePath)+".txt")
+	newFullPath := filepath.Join(newSectionPath, filepath.Base(decodedNotePath)+".txt")
 
 	if _, err := os.Stat(oldFullPath); os.IsNotExist(err) {
 		http.Error(w, "Заметка не найдена", http.StatusNotFound)
@@ -760,7 +866,7 @@ func moveNoteHandler(w http.ResponseWriter, r *http.Request) {
 	setFlash(w, "Заметка успешно перемещена")
 	log.Printf("Заметка успешно перемещена: %s -> %s", oldFullPath, newFullPath)
 
-	currentSection := filepath.Dir(notePath)
+	currentSection := filepath.Dir(decodedNotePath)
 	if currentSection == "." {
 		currentSection = "Общие"
 	}
