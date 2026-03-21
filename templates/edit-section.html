@@ -107,7 +107,7 @@
             width: 100%;
             padding: 12px;
             border: 2px solid var(--anti-flash-white);
-            border-radius:和新 5px;
+            border-radius: 5px;
             font-size: 16px;
             transition: border-color 0.3s;
         }
@@ -636,7 +636,7 @@ function extractTextFromHtml(html) {
 document.getElementById('newSectionForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const newSection = document.getElementById('newSectionNameInput').value.trim();
-    const notePath = document.getElementById('noteTo极Move').value;
+    const notePath = document.getElementById('noteToMove').value;
     
     if (!newSection) {
         showToast('❌ Введите название раздела', 'error');
