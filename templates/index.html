@@ -133,10 +133,21 @@
         }
 
         .header h1 {
-            color: var(--text-primary);
             margin: 0;
             font-size: 2rem;
             font-weight: 700;
+        }
+
+        /* Стиль кликабельного заголовка */
+        .header-title-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .header-title-link:hover {
+            opacity: 0.8;
+            text-decoration: none;
         }
 
         .header-actions {
@@ -572,7 +583,9 @@
 <body data-flash="{{.Flash}}">
     <div class="container">
         <header class="header">
-            <h1>{{.Title}}</h1>
+            <h1>
+                <a href="/" class="header-title-link">{{.Title}}</a>
+            </h1>
             <div class="header-actions">
                 <!-- Переключатель темы -->
                 <div class="theme-switch">
