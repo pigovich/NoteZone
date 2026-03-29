@@ -300,6 +300,27 @@
             if (flashMessage) {
                 showToast(flashMessage, 'success');
             }
+
+            //Преобразование ссылок в кликабельные
+    const noteContentEl = document.getElementById('noteContent');
+    if (noteContentEl) {
+        const rawContent = noteContentEl.getAttribute('data-content') || noteContentEl.textContent;
+        
+        // Регулярное выражение для поиска URL
+        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        const emailRegex = /(\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b)/ig;
+        
+        let linkedContent = rawContent.replace(urlRegex, function(url) {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--ozon-blue); text-decoration: underline;">${url}</a>`;
+        });
+        
+        linkedContent = linkedContent.replace(emailRegex, function(email) {
+            return `<a href="mailto:${email}" style="color: var(--ozon-blue); text-decoration: underline;">${email}</a>`;
+        });
+        
+        noteContentEl.innerHTML = linkedContent;
+    }
+
         });
     </script>
 </body>
