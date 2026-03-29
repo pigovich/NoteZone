@@ -248,39 +248,39 @@
             <h1>{{.Title}}</h1>
         </header>
         <main class="form-container">
-            <form action="/save" method="POST" class="note-form" id="noteForm">
-                <div class="form-group">
-                    <label>Раздел:</label>
-                    <select id="sectionSelect" name="section" class="form-select">
-                        <option value="">-- Выберите раздел --</option>
-                        {{range .Sections}}
-                        <option value="{{.}}">{{.}}</option>
-                        {{end}}
-                        <option value="__new__">+ Создать новый раздел</option>
-                    </select>
-                    <input type="text" id="newSectionInput" name="new_section" 
-                           class="form-input new-section-input" placeholder="Введите название нового раздела">
-                    <div id="sectionError" class="error-message">Пожалуйста, выберите раздел или создайте новый</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="title">Название заметки:</label>
-                    <input type="text" id="title" name="title" required 
-                           class="form-input" placeholder="Введите название заметки">
-                </div>
-                
-                <div class="form-group">
-                    <label for="content">Содержимое:</label>
-                    <textarea id="content" name="content" required class="form-textarea"
-                              placeholder="Введите содержимое заметки" rows="10"></textarea>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" id="submitBtn">Создать заметку</button>
-                    <a href="/" class="btn btn-secondary">Отмена</a>
-                </div>
-            </form>
-        </main>
+    <form action="/save" method="POST" class="note-form" id="noteForm">
+        <div class="form-group">
+            <label>Раздел:</label>
+            <select id="sectionSelect" name="section" class="form-select">
+                <option value="">-- Выберите раздел --</option>
+                <option value="__new__">+ Создать новый раздел</option>
+                {{range .Sections}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+            <input type="text" id="newSectionInput" name="new_section" 
+                   class="form-input new-section-input" placeholder="Введите название нового раздела">
+            <div id="sectionError" class="error-message">Пожалуйста, выберите раздел или создайте новый</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="title">Название заметки:</label>
+            <input type="text" id="title" name="title" required 
+                   class="form-input" placeholder="Введите название заметки">
+        </div>
+        
+        <div class="form-group">
+            <label for="content">Содержимое:</label>
+            <textarea id="content" name="content" required class="form-textarea"
+                      placeholder="Введите содержимое заметки" rows="10"></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitBtn">Создать заметку</button>
+            <a href="/" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</main>
     </div>
     
     <div id="toastContainer"></div>
